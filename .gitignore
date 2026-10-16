@@ -1,0 +1,24 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+*.bak
+backups/
+*.log
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/
+*.lock
+# Local IDE and Claude settings
+.vscode/
+.claude/settings.local.json
