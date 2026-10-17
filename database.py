@@ -1,4 +1,4 @@
-"""SQLite storage. Every task, note and reminder operation is scoped to its owner's Telegram ID."""
+"""SQLite storage. Every task, note, reminder and weather city operation is scoped to its owner's Telegram ID."""
 
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -20,6 +20,10 @@ REMINDER_COLUMNS = frozenset({
     "error_count", "last_error",
 })
 SETTINGS_COLUMNS = frozenset({"user_id", "timezone", "created_at", "updated_at"})
+LOCATION_COLUMNS = frozenset({
+    "user_id", "city_name", "country", "region", "latitude", "longitude", "timezone", "geocoding_id",
+    "created_at", "updated_at",
+})
 
 
 @dataclass(frozen=True)
@@ -166,8 +170,23 @@ class Database:
                     last_error TEXT
                 )
             """)
+            # The weather city and its zone are separate from user_settings.timezone (reminders).
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS user_locations (
+                    user_id INTEGER PRIMARY KEY REFERENCES users(telegram_id),
+                    city_name TEXT NOT NULL CHECK(length(trim(city_name)) BETWEEN 1 AND 100),
+                    country TEXT NOT NULL DEFAULT '',
+                    region TEXT NOT NULL DEFAULT '',
+                    latitude REAL NOT NULL CHECK(latitude BETWEEN -90 AND 90),
+                    longitude REAL NOT NULL CHECK(longitude BETWEEN -180 AND 180),
+                    timezone TEXT NOT NULL DEFAULT '',
+                    geocoding_id INTEGER,
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
             for table, required in (("notes", NOTE_COLUMNS), ("user_settings", SETTINGS_COLUMNS),
-                                    ("reminders", REMINDER_COLUMNS)):
+                                    ("reminders", REMINDER_COLUMNS), ("user_locations", LOCATION_COLUMNS)):
                 columns = {row["name"] for row in conn.execute(f"PRAGMA table_info({table})")}
                 if not required <= columns:
                     # An older table must be inspected by hand, not silently altered.

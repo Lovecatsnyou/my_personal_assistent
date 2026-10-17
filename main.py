@@ -26,6 +26,10 @@ from task_handlers import (
     TASK_COMMANDS, TASKS_BUTTON, cancel_command as cancel_task_action, clear_task_state,
     consume_task_text, get_database, register_task_handlers, respond, show_task_menu,
 )
+from weather_handlers import (
+    WEATHER_BUTTON, WEATHER_COMMANDS, cancel_weather_action, clear_weather_state, close_weather,
+    consume_weather_text, register_weather_handlers, show_weather_menu,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -39,7 +43,9 @@ MENU = ReplyKeyboardMarkup(
 )
 
 # Section name (callback prefix) -> function that drops its unfinished dialog.
-SECTION_STATES = {"tasks": clear_task_state, "notes": clear_note_state, "rem": clear_reminder_state}
+SECTION_STATES = {
+    "tasks": clear_task_state, "notes": clear_note_state, "rem": clear_reminder_state, "wx": clear_weather_state,
+}
 
 
 def clear_states(context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -67,10 +73,13 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         "Напоминания:\n/remind [текст] — создать напоминание\n/reminders — мои напоминания\n"
         "/editremind [ID] — изменить, отключить или включить\n/delremind [ID] — удалить с подтверждением\n"
         "/timezone [пояс] — часовой пояс, например /timezone Europe/Moscow\n\n"
+        "Погода (данные Open-Meteo):\n/weather [город] — текущая погода\n"
+        "/forecast [город] — прогноз на 7 дней\n/setcity [город] — выбрать основной город\n"
+        "/mycity — мой город\n\n"
         "/cancel — отменить ввод или удаление\n\n"
-        "Кнопки «📋 Задачи», «📝 Заметки» и «⏰ Напоминания» открывают интерактивные меню. "
+        "Кнопки «📋 Задачи», «📝 Заметки», «⏰ Напоминания» и «🌤 Погода» открывают интерактивные меню. "
         "В списках по 5 записей на страницу. Эти разделы доступны в личном чате с ботом. "
-        "Остальные разделы пока являются заготовками.",
+        "Раздел новостей пока является заготовкой.",
         reply_markup=MENU,
     )
 
@@ -78,7 +87,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     message = update.effective_message
     text = message.text or ""
     sections = {
-        "🌤 Погода": "🌤 Прогноз погоды добавим позже.",
         "📰 Новости": "📰 Новости добавим позже.",
     }
     if text == TASKS_BUTTON:
@@ -90,13 +98,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     elif text == REMINDERS_BUTTON:
         clear_states(context)
         await show_reminder_menu(update, context)
+    elif text == WEATHER_BUTTON:
+        clear_states(context)
+        await show_weather_menu(update, context)
     elif text == "ℹ️ Помощь":
         await help_command(update, context)
     elif text in sections:
         clear_states(context)
         await message.reply_text(sections[text], reply_markup=MENU)
     elif (await consume_task_text(update, context) or await consume_note_text(update, context)
-          or await consume_reminder_text(update, context)):
+          or await consume_reminder_text(update, context) or await consume_weather_text(update, context)):
         return
     else:
         await message.reply_text("Выбери раздел в меню или нажми /help.", reply_markup=MENU)
@@ -121,6 +132,7 @@ async def switch_section(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         command = update.effective_message.text.split(maxsplit=1)[0][1:].split("@", 1)[0].lower()
         section = next((name for name, commands in (
             ("tasks", TASK_COMMANDS), ("notes", NOTE_COMMANDS), ("rem", REMINDER_COMMANDS),
+            ("wx", WEATHER_COMMANDS),
         ) if command in commands), None)
     if section in SECTION_STATES:
         for name, clear in SECTION_STATES.items():
@@ -129,7 +141,8 @@ async def switch_section(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 
 async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if not (await cancel_note_action(update, context) or await cancel_reminder_action(update, context)):
+    if not (await cancel_note_action(update, context) or await cancel_reminder_action(update, context)
+            or await cancel_weather_action(update, context)):
         await cancel_task_action(update, context)
 
 
@@ -165,7 +178,8 @@ def build_application(token: str, database: Database | None = None) -> Applicati
     database = database if database is not None else Database()
     database.initialize()
     # Sequential updates keep per-user input and deletion confirmations consistent.
-    app = Application.builder().token(token).concurrent_updates(False).post_init(restore_on_start).build()
+    app = (Application.builder().token(token).concurrent_updates(False)
+           .post_init(restore_on_start).post_shutdown(close_weather).build())
     if app.job_queue is None:
         raise RuntimeError('Нет JobQueue: установите зависимости, pip install -r requirements.txt')
     app.bot_data["database"] = database
@@ -178,6 +192,7 @@ def build_application(token: str, database: Database | None = None) -> Applicati
     register_task_handlers(app)
     register_note_handlers(app)
     register_reminder_handlers(app)
+    register_weather_handlers(app)
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     app.add_handler(MessageHandler(filters.COMMAND, unknown_command))
     app.add_error_handler(error_handler)
