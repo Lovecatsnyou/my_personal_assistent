@@ -1,0 +1,56 @@
+{
+  "_comment": "RSS/Atom sources. Each URL was checked on 2026-10-17: HTTP 200, valid XML, items with title and link. To add a source, append an object; to switch one off, set \"enabled\": false; \"summaries\": false hides descriptions that carry no text. Categories: ai_tech, programming, games, economy, world, science.",
+  "sources": [
+    {"id": "habr_ai", "name": "Хабр: ИИ", "category": "ai_tech",
+     "url": "https://habr.com/ru/rss/hubs/artificial_intelligence/articles/"},
+    {"id": "3dnews", "name": "3DNews", "category": "ai_tech",
+     "url": "https://3dnews.ru/news/rss/"},
+    {"id": "arstechnica", "name": "Ars Technica", "category": "ai_tech",
+     "url": "https://feeds.arstechnica.com/arstechnica/index"},
+    {"id": "theverge", "name": "The Verge", "category": "ai_tech",
+     "url": "https://www.theverge.com/rss/index.xml"},
+
+    {"id": "habr_prog", "name": "Хабр: Программирование", "category": "programming",
+     "url": "https://habr.com/ru/rss/hubs/programming/articles/"},
+    {"id": "hackernews", "name": "Hacker News", "category": "programming",
+     "url": "https://news.ycombinator.com/rss", "summaries": false},
+    {"id": "python_insider", "name": "Python Insider", "category": "programming",
+     "url": "https://blog.python.org/feeds/posts/default"},
+
+    {"id": "stopgame", "name": "StopGame", "category": "games",
+     "url": "https://rss.stopgame.ru/rss_news.xml"},
+    {"id": "igromania", "name": "Игромания", "category": "games",
+     "url": "https://www.igromania.ru/rss/news.xml"},
+    {"id": "rps", "name": "Rock Paper Shotgun", "category": "games",
+     "url": "https://www.rockpapershotgun.com/feed"},
+    {"id": "polygon", "name": "Polygon", "category": "games",
+     "url": "https://www.polygon.com/feed/"},
+
+    {"id": "vedomosti_econ", "name": "Ведомости: Экономика", "category": "economy",
+     "url": "https://www.vedomosti.ru/rss/rubric/economics"},
+    {"id": "kommersant_econ", "name": "Коммерсантъ: Экономика", "category": "economy",
+     "url": "https://www.kommersant.ru/rss/section-economics.xml"},
+    {"id": "lenta_econ", "name": "Lenta.ru: Экономика", "category": "economy",
+     "url": "https://lenta.ru/rss/news/economics"},
+    {"id": "bbc_business", "name": "BBC Business", "category": "economy",
+     "url": "https://feeds.bbci.co.uk/news/business/rss.xml"},
+
+    {"id": "bbc_russian", "name": "BBC News Русская служба", "category": "world",
+     "url": "https://feeds.bbci.co.uk/russian/rss.xml"},
+    {"id": "bbc_world", "name": "BBC World", "category": "world",
+     "url": "https://feeds.bbci.co.uk/news/world/rss.xml"},
+    {"id": "lenta_world", "name": "Lenta.ru: Мир", "category": "world",
+     "url": "https://lenta.ru/rss/news/world"},
+
+    {"id": "nplus1", "name": "N + 1", "category": "science",
+     "url": "https://nplus1.ru/rss"},
+    {"id": "lenta_science", "name": "Lenta.ru: Наука и техника", "category": "science",
+     "url": "https://lenta.ru/rss/news/science"},
+    {"id": "sciencedaily", "name": "ScienceDaily", "category": "science",
+     "url": "https://www.sciencedaily.com/rss/all.xml"},
+    {"id": "bbc_science", "name": "BBC Science", "category": "science",
+     "url": "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml"},
+    {"id": "nature", "name": "Nature", "category": "science",
+     "url": "https://www.nature.com/nature.rss"}
+  ]
+}

@@ -5,6 +5,7 @@ from pathlib import Path
 import unittest
 
 from tests.test_bot import BotTests
+from tests.test_news_bot import NewsBotTests
 from tests.test_notes_bot import NoteBotTests
 from tests.test_reminders_bot import ReminderBotTests
 from tests.test_weather_bot import WeatherBotTests
@@ -22,7 +23,7 @@ def polling_loop() -> asyncio.AbstractEventLoop:
 
 
 def main() -> None:
-    for case in (BotTests, NoteBotTests, ReminderBotTests, WeatherBotTests):
+    for case in (BotTests, NewsBotTests, NoteBotTests, ReminderBotTests, WeatherBotTests):
         case.loop_factory = staticmethod(polling_loop)
     project = Path(__file__).resolve().parents[1]
     suite = unittest.defaultTestLoader.discover(

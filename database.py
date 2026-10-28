@@ -1,4 +1,4 @@
-"""SQLite storage. Every task, note, reminder and weather city operation is scoped to its owner's Telegram ID."""
+"""SQLite storage. Every task, note, reminder, weather city and news operation is scoped to its owner's Telegram ID."""
 
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -23,6 +23,11 @@ SETTINGS_COLUMNS = frozenset({"user_id", "timezone", "created_at", "updated_at"}
 LOCATION_COLUMNS = frozenset({
     "user_id", "city_name", "country", "region", "latitude", "longitude", "timezone", "geocoding_id",
     "created_at", "updated_at",
+})
+NEWS_INTEREST_COLUMNS = frozenset({"user_id", "category", "created_at"})
+NEWS_BOOKMARK_COLUMNS = frozenset({
+    "id", "user_id", "article_id", "url", "title", "summary", "source_name", "category", "published_at",
+    "created_at",
 })
 
 
@@ -185,8 +190,35 @@ class Database:
                     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
                 )
             """)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS news_interests (
+                    user_id INTEGER NOT NULL REFERENCES users(telegram_id),
+                    category TEXT NOT NULL CHECK(length(category) BETWEEN 1 AND 32),
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (user_id, category)
+                )
+            """)
+            # Bookmarks keep their own copy of the article, so they outlive the RSS feed.
+            # published_at is ISO 8601 UTC or NULL when the source gave no date.
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS news_bookmarks (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL REFERENCES users(telegram_id),
+                    article_id TEXT NOT NULL CHECK(length(article_id) BETWEEN 1 AND 64),
+                    url TEXT NOT NULL CHECK(length(url) BETWEEN 1 AND 2048),
+                    title TEXT NOT NULL CHECK(length(trim(title)) BETWEEN 1 AND 300),
+                    summary TEXT NOT NULL DEFAULT '',
+                    source_name TEXT NOT NULL DEFAULT '',
+                    category TEXT NOT NULL DEFAULT '',
+                    published_at TEXT,
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE (user_id, article_id)
+                )
+            """)
             for table, required in (("notes", NOTE_COLUMNS), ("user_settings", SETTINGS_COLUMNS),
-                                    ("reminders", REMINDER_COLUMNS), ("user_locations", LOCATION_COLUMNS)):
+                                    ("reminders", REMINDER_COLUMNS), ("user_locations", LOCATION_COLUMNS),
+                                    ("news_interests", NEWS_INTEREST_COLUMNS),
+                                    ("news_bookmarks", NEWS_BOOKMARK_COLUMNS)):
                 columns = {row["name"] for row in conn.execute(f"PRAGMA table_info({table})")}
                 if not required <= columns:
                     # An older table must be inspected by hand, not silently altered.
@@ -194,6 +226,7 @@ class Database:
             conn.execute("CREATE INDEX IF NOT EXISTS idx_notes_user_id ON notes(user_id, id)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_reminders_user_id ON reminders(user_id, id)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_reminders_due ON reminders(status, next_run_utc)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_news_bookmarks_user_id ON news_bookmarks(user_id, id)")
 
     def upsert_user(
         self, telegram_id: int, first_name: str, username: str | None = None,
