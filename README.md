@@ -1,6 +1,6 @@
 # Personal Assistant Bot
 
-Персональный Telegram-ассистент: пользователи, задачи, заметки, напоминания, погода и новости из RSS; данные в SQLite. Стек: Python 3.14, python-telegram-bot 22.8–22.x, Linux.
+Персональный Telegram-ассистент: пользователи, задачи, заметки, напоминания, погода и новости из RSS; данные в SQLite. Стек: Python 3.14, python-telegram-bot 22.8–22.x. Запуск: Linux, macOS или Windows через WSL2 (не нативно).
 
 ## Возможности
 
@@ -76,6 +76,112 @@ python main.py
 
 В Bash/Zsh активация: `source .venv/bin/activate`; безопасный ввод токена в Bash:
 `read -rs -p 'BOT_TOKEN: ' BOT_TOKEN`, затем `export BOT_TOKEN` и `python main.py`.
+
+## Запуск в Windows 10/11 (через WSL2)
+
+> **Важно:** нативный запуск из PowerShell или CMD сейчас не поддерживается.
+> В `main.py` используется модуль `fcntl` для блокировки второго экземпляра
+> бота. Этот модуль доступен в Linux/macOS, но отсутствует в обычном Python
+> для Windows. Поэтому на Windows используйте **WSL2** (Linux внутри Windows),
+> не удаляя блокировку из кода.
+
+1. Установите **WSL2 с Ubuntu**. Откройте PowerShell **от имени администратора**
+   и выполните:
+
+   ```powershell
+   wsl --install -d Ubuntu
+   ```
+
+   Если система попросит перезагрузку, перезагрузите компьютер. Затем откройте
+   приложение **Ubuntu** (через меню «Пуск») и создайте Linux-пользователя,
+   следуя подсказкам. Если WSL уже установлен, этот шаг пропустите.
+
+2. **В терминале Ubuntu (не в PowerShell)** установите Git, Python и модуль venv:
+
+   ```bash
+   sudo apt update
+   sudo apt install -y git python3 python3-venv python3-pip
+   python3 --version
+   ```
+
+   Проект проверен на **Python 3.14**; версия Python в Ubuntu зависит от версии
+   дистрибутива. Для максимального соответствия проверенной конфигурации
+   используйте Python 3.14. Если в Ubuntu выбрана другая версия, её совместимость
+   с проектом нужно проверить отдельно.
+
+3. Склонируйте репозиторий в домашний каталог **Ubuntu**, создайте
+   виртуальное окружение и установите зависимости:
+
+   ```bash
+   git clone https://github.com/Lovecatsnyou/my_personal_assistent.git
+   cd my_personal_assistent
+   python3 -m venv .venv
+   source .venv/bin/activate
+   python -m pip install -r requirements.txt
+   ```
+
+4. Получите токен у [BotFather](https://t.me/BotFather). В терминале Ubuntu
+   введите его без отображения и сохранения в истории команд, затем запустите бота:
+
+   ```bash
+   read -r -s -p "BOT_TOKEN: " BOT_TOKEN
+   echo
+   export BOT_TOKEN
+   python main.py
+   ```
+
+   При наличии `BOT_TOKEN` в окружении достаточно `python main.py`. Чтобы
+   остановить бота, нажмите **Ctrl+C**. Для повторного запуска откройте Ubuntu,
+   перейдите в каталог проекта, выполните `source .venv/bin/activate`,
+   при необходимости снова задайте `BOT_TOKEN` и запустите `python main.py`.
+
+**Примечание:** бот работает в окружении WSL2, поэтому окно терминала и
+компьютер должны оставаться запущенными, а для связи с Telegram нужен интернет.
+Не запускайте одновременно второй экземпляр бота с тем же токеном и базой.
+
+## Запуск в macOS (Terminal / Zsh)
+
+1. Установите [Homebrew](https://brew.sh/), если он ещё не установлен.
+   В приложении **Terminal** установите Python 3.14 и Git:
+
+   ```zsh
+   brew install python@3.14 git
+   python3.14 --version
+   ```
+
+   Python 3.14 — версия, на которой проверялся проект (на Linux).
+   Выполнение на macOS отдельно не проверялось.
+
+2. Склонируйте проект, создайте виртуальное окружение и установите зависимости:
+
+   ```zsh
+   git clone https://github.com/Lovecatsnyou/my_personal_assistent.git
+   cd my_personal_assistent
+   python3.14 -m venv .venv
+   source .venv/bin/activate
+   python -m pip install -r requirements.txt
+   ```
+
+3. Получите токен у [BotFather](https://t.me/BotFather). В стандартной
+   оболочке macOS **Zsh** введите токен без отображения ввода и запустите бота:
+
+   ```zsh
+   read -rs "BOT_TOKEN?BOT_TOKEN: "
+   echo
+   export BOT_TOKEN
+   python main.py
+   ```
+
+   Если `BOT_TOKEN` уже задан, повторять ввод не нужно. Остановка — **Ctrl+C**.
+   При следующем запуске выполните `cd my_personal_assistent`,
+   `source .venv/bin/activate`, при необходимости снова задайте `BOT_TOKEN`
+   и запустите `python main.py`.
+
+**Для всех систем:** зависимости устанавливаются из `requirements.txt`,
+включая `python-telegram-bot[job-queue]` для напоминаний. Файл `.env`
+автоматически **не загружается**: нужен именно `BOT_TOKEN` в окружении процесса.
+Не записывайте токен в исходники, README или Git. Данные хранятся в SQLite
+(`assistant.db` рядом с `main.py`); не удаляйте базу при обновлении проекта.
 
 ## Команды и работа с меню
 
